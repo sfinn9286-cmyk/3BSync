@@ -1,0 +1,1 @@
+Upstream: [Ingest Alert](<../Ingest Alert/script.ts>). Calls [Anthropic Claude](https://docs.anthropic.com/en/api/messages) to triage the alert — severity, confidence, true/false-positive verdict, plain-English summary, MITRE ATT&CK techniques, and recommended actions. Emits the alert enriched with an `analysis` object to [Dispatch](../Dispatch/script.ts).

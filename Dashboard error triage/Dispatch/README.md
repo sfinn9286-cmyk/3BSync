@@ -1,0 +1,1 @@
+Upstream: [Triage](../Triage/script.ts). Appends the enriched alert to `alerts.jsonl` in the writable `soc` volume. For **High/Critical** severity it builds a Slack message and a Jira ticket payload and logs them to stderr — these are **stubs**. Connect Slack and Jira connectors here to send for real.

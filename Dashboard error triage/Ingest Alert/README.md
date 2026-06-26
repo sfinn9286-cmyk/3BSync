@@ -1,0 +1,1 @@
+`POST /soc-ingest` (private). Entry point for security alerts. Accepts an alert as a JSON body; if the body is empty or invalid, generates a realistic synthetic alert (brute force, malware, exfiltration, phishing, privilege escalation) for demos. Emits a normalized alert to [Triage](../Triage/script.ts).

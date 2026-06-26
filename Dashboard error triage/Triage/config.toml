@@ -1,0 +1,4 @@
+color = "purple"
+links = ["Dispatch"]
+apps = [{ name = "anthropic", type = "anthropic" }]
+timeout = 120

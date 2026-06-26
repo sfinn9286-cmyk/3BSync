@@ -1,0 +1,4 @@
+color = "orange"
+route = "/soc-ingest"
+route_type = "api"
+links = ["Triage"]
