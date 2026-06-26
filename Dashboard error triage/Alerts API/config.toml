@@ -1,3 +1,4 @@
+output = true
 color = "teal"
 route = "/soc-alerts"
 route_type = "api"
