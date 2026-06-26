@@ -59,8 +59,10 @@ export default function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("All");
   const [err, setErr] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  // Returns the current alert count so callers can detect new arrivals.
+  const load = useCallback(async (): Promise<number> => {
     try {
       const r = await fetch(ALERTS_URL, { credentials: "same-origin" });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -68,10 +70,13 @@ export default function App() {
       // Empty body (no data yet on this branch, or a transient blank response)
       // is not an error — just means there's nothing to show yet.
       const j = text ? JSON.parse(text) : { alerts: [] };
-      setAlerts(Array.isArray(j.alerts) ? j.alerts : []);
+      const list: Alert[] = Array.isArray(j.alerts) ? j.alerts : [];
+      setAlerts(list);
       setErr(null);
+      return list.length;
     } catch (e) {
       setErr(String(e));
+      return -1;
     } finally {
       setLoading(false);
     }
@@ -85,15 +90,31 @@ export default function App() {
 
   const generate = async () => {
     setGenerating(true);
+    setErr(null);
+    const before = await load();
+    const baseline = before < 0 ? alerts.length : before;
     try {
-      await fetch(INGEST_URL, { method: "POST", credentials: "same-origin", body: "" });
-      // Triage runs async downstream; poll a few times to pick it up.
-      for (let i = 0; i < 8; i++) {
-        await new Promise((r) => setTimeout(r, 2500));
-        await load();
+      setStatus("Injecting alert…");
+      const resp = await fetch(INGEST_URL, { method: "POST", credentials: "same-origin", body: "" });
+      if (!resp.ok) throw new Error(`Ingest returned HTTP ${resp.status}`);
+      // Triage runs Claude downstream (~10-20s). Poll until the new alert
+      // appears, then stop early. Cap at ~45s.
+      setStatus("AI triaging the alert… (~15s)");
+      const start = Date.now();
+      while (Date.now() - start < 45000) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const count = await load();
+        if (count > baseline) {
+          setStatus("New alert triaged ✓");
+          setTimeout(() => setStatus(null), 3000);
+          return;
+        }
       }
+      setStatus("Still processing — it will appear shortly.");
+      setTimeout(() => setStatus(null), 5000);
     } catch (e) {
       setErr(String(e));
+      setStatus(null);
     } finally {
       setGenerating(false);
     }
@@ -129,11 +150,19 @@ export default function App() {
           <button
             onClick={generate}
             disabled={generating}
-            className="px-4 py-2 text-xs tracking-widest uppercase border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition rounded"
+            className="px-4 py-2 text-xs tracking-widest uppercase border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition rounded flex items-center gap-2"
           >
-            {generating ? "Injecting…" : "+ Generate Sample Alert"}
+            {generating && (
+              <span className="h-3 w-3 rounded-full border-2 border-emerald-400/40 border-t-emerald-300 animate-spin" />
+            )}
+            {generating ? "Triaging…" : "+ Generate Sample Alert"}
           </button>
         </div>
+        {status && (
+          <div className="max-w-7xl mx-auto px-6 pb-3 -mt-1">
+            <span className="text-[11px] tracking-widest uppercase text-emerald-300/80">{status}</span>
+          </div>
+        )}
       </header>
 
       {/* Stat strip */}
