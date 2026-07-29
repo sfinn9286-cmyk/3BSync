@@ -1,0 +1,5 @@
+color = "teal"
+output = true
+route = "/cka/progress"
+route_type = "api"
+timeout = 30

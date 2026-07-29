@@ -1,0 +1,7 @@
+color = "purple"
+output = true
+route = "/cka/grade"
+route_auth = "space"
+route_type = "api"
+connectors = [{ name = "anthropic-se-demos-please-only-use-this-one", type = "anthropic" }]
+timeout = 120

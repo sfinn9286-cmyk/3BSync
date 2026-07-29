@@ -1,0 +1,5 @@
+color = "sky"
+output = true
+route = "/cka/questions"
+route_type = "api"
+timeout = 30

@@ -1,0 +1,126 @@
+{
+  "get": {
+    "summary": "Read the signed-in user's study progress",
+    "responses": {
+      "200": {
+        "description": "Totals, per-domain and per-topic accuracy, review queue and session history",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "user": { "type": "string" },
+                "totals": {
+                  "type": "object",
+                  "properties": {
+                    "answered": { "type": "integer" },
+                    "avgScore": { "type": ["number", "null"] },
+                    "uniqueQuestions": { "type": "integer" }
+                  }
+                },
+                "sessions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "session": { "type": "string" },
+                      "mode": { "type": "string" },
+                      "total": { "type": "integer" },
+                      "scored": { "type": "number" },
+                      "startedAt": { "type": "string" },
+                      "finishedAt": { "type": "string" }
+                    }
+                  }
+                },
+                "byDomain": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "domain": { "type": "string" },
+                      "attempts": { "type": "integer" },
+                      "avgScore": { "type": "number" }
+                    }
+                  }
+                },
+                "byTopic": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "domain": { "type": "string" },
+                      "topic": { "type": "string" },
+                      "attempts": { "type": "integer" },
+                      "avgScore": { "type": "number" }
+                    }
+                  }
+                },
+                "reviewQueue": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "questionId": { "type": "string" },
+                      "domain": { "type": "string" },
+                      "topic": { "type": "string" },
+                      "avgScore": { "type": "number" },
+                      "attempts": { "type": "integer" },
+                      "lastSeen": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "post": {
+    "summary": "Record the graded results of a session",
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "required": ["session", "mode", "results"],
+            "properties": {
+              "session": { "type": "string", "description": "Client-generated unique session id." },
+              "mode": { "type": "string", "enum": ["exam", "drill"] },
+              "startedAt": { "type": "string", "format": "date-time" },
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["questionId", "domain", "topic", "type", "score", "verdict"],
+                  "properties": {
+                    "questionId": { "type": "string" },
+                    "domain": { "type": "string" },
+                    "topic": { "type": "string" },
+                    "type": { "type": "string" },
+                    "score": { "type": "number" },
+                    "verdict": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Rows written",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": { "saved": { "type": "integer" }, "user": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

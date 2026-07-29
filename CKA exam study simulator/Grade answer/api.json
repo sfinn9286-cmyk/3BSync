@@ -1,0 +1,64 @@
+{
+  "post": {
+    "summary": "Grade a candidate answer to a CKA practice question",
+    "description": "MCQ answers are graded by exact match, command answers by token overlap against accepted forms, and anything else by Claude against the model answer and rubric.",
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "required": ["type", "prompt", "userAnswer"],
+            "properties": {
+              "type": { "type": "string", "enum": ["mcq", "command", "scenario"] },
+              "prompt": { "type": "string" },
+              "userAnswer": { "type": "string" },
+              "modelAnswer": { "type": "string" },
+              "accepted": { "type": "array", "items": { "type": "string" } },
+              "rubric": { "type": "array", "items": { "type": "string" } },
+              "options": { "type": "array", "items": { "type": "string" } },
+              "selectedIndex": { "type": "integer" },
+              "answerIndex": { "type": "integer" },
+              "explanation": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "The grade. `graded` reports which path produced it; `self` means AI grading was unavailable and the rubric is returned for self-assessment.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["graded"],
+              "properties": {
+                "graded": { "type": "string", "enum": ["deterministic", "ai", "self"] },
+                "score": { "type": "number", "minimum": 0, "maximum": 1 },
+                "verdict": { "type": "string", "enum": ["correct", "partial", "incorrect"] },
+                "feedback": { "type": "string" },
+                "modelAnswer": { "type": "string" },
+                "correctOption": { "type": "string" },
+                "correctedAnswer": { "type": "string" },
+                "rubric": { "type": "array", "items": { "type": "string" } },
+                "rubricResults": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["point", "met"],
+                    "properties": {
+                      "point": { "type": "string" },
+                      "met": { "type": "boolean" },
+                      "note": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

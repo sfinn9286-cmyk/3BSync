@@ -1,0 +1,70 @@
+{
+  "get": {
+    "summary": "Sample CKA practice questions from the bank",
+    "description": "Returns questions with their model answers, rubrics and doc links. mode=meta returns bank statistics instead.",
+    "parameters": [
+      { "name": "mode", "in": "query", "required": false, "schema": { "type": "string", "enum": ["exam", "drill", "review", "meta"], "default": "exam" } },
+      { "name": "count", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 120 }, "description": "Number of questions (exam default 17, drill default 10)." },
+      { "name": "domain", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Drill mode only. Exact CKA domain name." },
+      { "name": "topic", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Drill mode only." },
+      { "name": "type", "in": "query", "required": false, "schema": { "type": "string", "enum": ["mcq", "command", "scenario"] }, "description": "Drill mode only." },
+      { "name": "ids", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Review mode only. Comma-separated question ids." },
+      { "name": "exclude", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Comma-separated question ids to leave out." },
+      { "name": "seed", "in": "query", "required": false, "schema": { "type": "integer" }, "description": "Reproducible sampling." }
+    ],
+    "responses": {
+      "200": {
+        "description": "A sampled question set, or bank metadata when mode=meta",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "seed": { "type": "integer" },
+                "mode": { "type": "string" },
+                "count": { "type": "integer" },
+                "total": { "type": "integer", "description": "mode=meta only" },
+                "domains": {
+                  "type": "array",
+                  "description": "mode=meta only",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "domain": { "type": "string" },
+                      "weight": { "type": "number" },
+                      "count": { "type": "integer" },
+                      "topics": { "type": "array", "items": { "type": "string" } }
+                    }
+                  }
+                },
+                "questions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "domain", "topic", "difficulty", "type", "prompt", "doc"],
+                    "properties": {
+                      "id": { "type": "string" },
+                      "domain": { "type": "string" },
+                      "topic": { "type": "string" },
+                      "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+                      "type": { "type": "string", "enum": ["mcq", "command", "scenario"] },
+                      "prompt": { "type": "string" },
+                      "doc": { "type": "string", "format": "uri" },
+                      "explanation": { "type": "string" },
+                      "options": { "type": "array", "items": { "type": "string" } },
+                      "answerIndex": { "type": "integer" },
+                      "answer": { "type": "string" },
+                      "accepted": { "type": "array", "items": { "type": "string" } },
+                      "rubric": { "type": "array", "items": { "type": "string" } },
+                      "verify": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+color = "orange"
+output = true
+route = "/cka"
+route_type = "webpage"
+timeout = 45
