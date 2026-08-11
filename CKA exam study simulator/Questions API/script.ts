@@ -3,9 +3,13 @@ import { cluster } from "./bank/cluster";
 import { networking } from "./bank/networking";
 import { workloads } from "./bank/workloads";
 import { storage } from "./bank/storage";
+import { labs } from "./bank/labs";
+import { nodeLabs } from "./bank/nodelabs";
 import type { Domain, Question } from "./bank/types";
 
 const BANK: Question[] = [
+  ...labs,
+  ...nodeLabs,
   ...troubleshooting,
   ...cluster,
   ...networking,
@@ -40,7 +44,12 @@ function shuffle<T>(items: T[], rand: () => number): T[] {
   return out;
 }
 
-function weightedSample(count: number, rand: () => number, exclude: Set<string>): Question[] {
+function weightedSample(
+  source: Question[],
+  count: number,
+  rand: () => number,
+  exclude: Set<string>,
+): Question[] {
   const domains = Object.keys(WEIGHTS) as Domain[];
   const exact = domains.map((d) => ({ d, want: WEIGHTS[d] * count }));
   const quotas = new Map<Domain, number>(exact.map((e) => [e.d, Math.floor(e.want)]));
@@ -60,7 +69,7 @@ function weightedSample(count: number, rand: () => number, exclude: Set<string>)
   const leftovers: Question[] = [];
   for (const d of domains) {
     const pool = shuffle(
-      BANK.filter((q) => q.domain === d && !exclude.has(q.id)),
+      source.filter((q) => q.domain === d && !exclude.has(q.id)),
       rand,
     );
     const quota = quotas.get(d) ?? 0;
@@ -101,10 +110,12 @@ if (mode === "meta") {
   }
   respond("200 OK", {
     total: BANK.length,
+    labs: BANK.filter((q) => q.type === "lab").length,
     domains: (Object.keys(WEIGHTS) as Domain[]).map((d) => ({
       domain: d,
       weight: WEIGHTS[d],
       count: BANK.filter((q) => q.domain === d).length,
+      labs: BANK.filter((q) => q.domain === d && q.type === "lab").length,
       topics: [...(topics.get(d) ?? [])].sort(),
     })),
   });
@@ -121,7 +132,33 @@ let selected: Question[];
 
 if (mode === "exam") {
   const count = Math.min(Math.max(Number(params.get("count") ?? 17) || 17, 1), BANK.length);
-  selected = weightedSample(count, rand, exclude);
+  const style = params.get("style") ?? "lab";
+  const labPool = BANK.filter((q) => q.type === "lab");
+  const writtenPool = BANK.filter((q) => q.type !== "lab");
+  if (style === "written") {
+    selected = weightedSample(writtenPool, count, rand, exclude);
+  } else if (style === "mixed") {
+    const handsOn = weightedSample(labPool, Math.ceil(count / 2), rand, exclude);
+    const rest = weightedSample(
+      writtenPool,
+      count - handsOn.length,
+      rand,
+      new Set([...exclude, ...handsOn.map((q) => q.id)]),
+    );
+    selected = shuffle([...handsOn, ...rest], rand);
+  } else {
+    const handsOn = weightedSample(labPool, count, rand, exclude);
+    const rest =
+      handsOn.length < count
+        ? weightedSample(
+            writtenPool,
+            count - handsOn.length,
+            rand,
+            new Set([...exclude, ...handsOn.map((q) => q.id)]),
+          )
+        : [];
+    selected = shuffle([...handsOn, ...rest], rand);
+  }
 } else if (mode === "review") {
   const ids = (params.get("ids") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   selected = ids.map((id) => BANK.find((q) => q.id === id)).filter((q): q is Question => !!q);

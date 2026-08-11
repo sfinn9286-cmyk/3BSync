@@ -30,3 +30,24 @@ Every item carries a `domain`, `topic`, `difficulty` and a `doc` link to the kub
 The request/response contract is published in [api.json](api.json). Sampling and request parsing are in [script.ts](script.ts).
 
 **To add questions**, append to the relevant `bank/*.ts` file with a unique id prefix (`ts-`, `ca-`, `sn-`, `ws-`, `st-`) — no other file needs touching.
+
+### Hands-on lab tasks
+
+[bank/labs.ts](bank/labs.ts) holds the `lab` items — the performance-based tasks the mock exam prefers, since the real CKA has no written questions. Each carries:
+
+- `lab.init` — the starting cluster (nodes, namespaces, resources, canned logs/exec output) handed to the browser simulator in [cluster.ts](<../Simulator/cluster.ts>)
+- `lab.checks` — declarative assertions over the resulting objects (`kind`, `name`/`selector`, `namespace`, a dotted `path` and one of `equals` / `contains` / `gte` / `absent` / `count` / `minCount`). The client evaluates them in [checks.ts](<../Simulator/checks.ts>); each check is an equal share of the score.
+- `answer` and `explanation` — the model command sequence and why it is right, shown by "preview answer" and in the report.
+
+Every lab's model answer has been executed against the simulator: all commands exit zero and all checks pass, and no lab passes on its starting state.
+
+**To add a lab**, append to `bank/labs.ts` with a `lab-NNN` id, keep the commands inside the simulated kubectl surface (see the Simulator README), and make sure the checks describe *state*, not commands.
+
+### Node-level lab tasks
+
+[bank/nodelabs.ts](bank/nodelabs.ts) holds the labs that are solved *on a node* rather than through the API: a stopped kubelet, a broken `kube-apiserver` static pod manifest, an etcd snapshot, creating a static pod, and a downed container runtime with swap re-enabled. Their `lab.init.hosts` seeds each node's files, systemd units (with journal lines) and `crictl` containers, and their checks use two extra kinds:
+
+- `{ kind: "HostService", host, name: "kubelet", path: "active" | "enabled", equals: true }`
+- `{ kind: "HostFile", host, name: "/etc/kubernetes/manifests/x.yaml", contains: "…" }` (with `absent: true` to assert a string is *gone*)
+
+Everything else about them is the same as the API-level labs, including the requirement that the model answer actually solves the task in the simulator.
