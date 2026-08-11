@@ -15,6 +15,16 @@ Four tabs:
 
 Every task also has a **preview answer** toggle that reveals the model answer, the reasoning behind it, the rubric or checks, alternative accepted commands and the source doc without ending the session.
 
+## Hints
+
+Every task that involves typing commands — hands-on labs, scenarios and command recall, i.e. everything except the multiple-choice concept checks — carries a **hints** section above the answer preview, in mock exams as well as drills. Hints are revealed one at a time and escalate:
+
+1. **command shape** — the model answer's commands with names, namespaces and values blanked out as `▁▁▁`, so the verb, resource kind and flag names show but the specifics don't.
+2. **the flags and fields that matter** — the set of flags used, and the top-level fields when the answer is a manifest.
+3. **where to look it up** — the `kubectl <verb> --help` / `kubectl explain <resource>` calls that get you there, the task's verify command, and the kubernetes.io page it was written from.
+
+The hints are derived at render time from the question's model answer by [hints.ts](hints.ts) — nothing is authored per question, so adding a question to [the bank](<../Questions API/bank>) gets hints for free. Inline `#` comments in a model answer are stripped before derivation, since they often name the answer outright. Revealing hints is not tracked and does not affect scoring.
+
 ## The kubectl lab
 
 Hands-on tasks run against a simulated Kubernetes cluster *and its nodes*, entirely in the browser — no real API server or machine is contacted.

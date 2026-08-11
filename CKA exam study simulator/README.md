@@ -27,6 +27,7 @@ Writes only its own study history to the `cka_progress` volume, keyed by the aut
 
 - **Add or edit questions** — the per-domain files under [Questions API/bank/](<Questions API/bank>); nothing else needs updating.
 - **Change exam length or the pass heuristic** — `EXAM_SECONDS` and `PASS_ESTIMATE` at the top of [Simulator/App.tsx](<Simulator/App.tsx>).
+- **Change how hints work** — [Simulator/hints.ts](<Simulator/hints.ts>). Every command-typing task (labs, scenarios, command recall) shows a progressive hint section in exams and drills, derived from the model answer rather than authored per question.
 - **Change domain weighting** — `WEIGHTS` in [Questions API/script.ts](<Questions API/script.ts>); update it if the CNCF curriculum changes.
 - **Tune grading strictness** — `GRADER_SYSTEM` in [Grade answer/script.ts](<Grade answer/script.ts>).
 - **Reset progress** — delete rows from the `attempts`/`sessions` tables via [Progress API](<Progress API/script.ts>); the volume is per-space and drafts are isolated.

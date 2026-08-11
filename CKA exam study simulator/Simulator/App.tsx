@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cluster, type ClusterInit } from "./cluster";
 import { Shell } from "./node";
 import { evaluateLab } from "./checks";
+import { deriveHints } from "./hints";
 import { Terminal } from "./Terminal";
 import {
   api,
@@ -251,6 +252,71 @@ function AnswerReveal({ question }: { question: Question }) {
   );
 }
 
+function HintSection({ question }: { question: Question }) {
+  const hints = useMemo(() => deriveHints(question), [question]);
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => {
+    setShown(0);
+  }, [question.id]);
+
+  if (hints.length === 0) return null;
+
+  return (
+    <div className="mt-6 border border-signal/30 bg-signal/5 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Label>hints</Label>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-dim">
+            {shown}/{hints.length} revealed · no effect on your score
+          </span>
+        </div>
+        <div className="flex gap-2">
+          {shown < hints.length && (
+            <button
+              type="button"
+              onClick={() => setShown((n) => n + 1)}
+              className="border border-signal/60 px-4 py-1.5 text-[11px] uppercase tracking-[0.18em] text-signal hover:bg-signal/10"
+            >
+              {shown === 0 ? "reveal a hint" : "another hint"}
+            </button>
+          )}
+          {shown > 0 && (
+            <button
+              type="button"
+              onClick={() => setShown(0)}
+              className="border border-edge px-4 py-1.5 text-[11px] uppercase tracking-[0.18em] text-dim hover:border-dim hover:text-ink"
+            >
+              hide
+            </button>
+          )}
+        </div>
+      </div>
+
+      {shown === 0 ? (
+        <p className="mt-3 text-[12px] leading-relaxed text-dim">
+          Hints escalate: the shape of the command first, then the flags and fields that matter,
+          then where to look it up. The model answer stays behind “preview answer”.
+        </p>
+      ) : (
+        <ol className="mt-4 space-y-4">
+          {hints.slice(0, shown).map((hint, i) => (
+            <li key={hint.label}>
+              <Label>
+                hint {i + 1} — {hint.label}
+              </Label>
+              <pre className="mt-1.5 overflow-x-auto border border-edge bg-void/70 p-3 text-[12.5px] leading-relaxed text-teal">
+                {hint.lines.join("\n")}
+              </pre>
+              {hint.note && <p className="mt-1.5 text-[11.5px] text-dim">{hint.note}</p>}
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
 function LabPane({
   question,
   shell,
@@ -436,6 +502,8 @@ function QuestionView({
           {grading ? "grading…" : question.type === "lab" ? "verify cluster" : "check answer"}
         </button>
       )}
+
+      {!grade && question.type !== "mcq" && <HintSection question={question} />}
 
       {!grade && (
         <div className="mt-4">
