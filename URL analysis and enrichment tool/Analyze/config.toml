@@ -1,0 +1,6 @@
+color = "purple"
+route = "/url-analysis/analyze"
+route_auth = "public"
+route_type = "api"
+timeout = 120
+apps = [{ name = "virustotal-rami-tyan-test", type = "virusTotal" }, { name = "urlscan", type = "urlscan" }]
