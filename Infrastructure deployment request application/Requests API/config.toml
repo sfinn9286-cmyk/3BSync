@@ -1,0 +1,5 @@
+color = "sky"
+output = true
+route = "/api/requests"
+route_type = "api"
+route_auth = "space"

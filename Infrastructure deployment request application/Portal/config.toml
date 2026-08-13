@@ -1,0 +1,5 @@
+color = "purple"
+output = true
+route = "/"
+route_type = "webpage"
+route_auth = "space"
