@@ -1,0 +1,5 @@
+color = "purple"
+output = true
+route = "/generate-openshift"
+route_type = "api"
+timeout = 120

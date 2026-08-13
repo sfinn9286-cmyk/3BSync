@@ -1,0 +1,4 @@
+color = "purple"
+output = true
+route = "/openshift-builder"
+route_type = "webpage"

@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@source "./*.tsx";
+@source "./components/*.tsx";
+
+:root {
+  --ink: #e8e6f0;
+  --violet: #8b6dff;
+  --violet-bright: #a892ff;
+}
+
+@theme {
+  --font-display: "Bricolage Grotesque", sans-serif;
+  --font-body: "Instrument Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background-color: #08070c;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Atmospheric background: layered violet glow + fine grid */
+.bg-console {
+  background-color: #08070c;
+  background-image:
+    radial-gradient(60rem 60rem at 85% -10%, rgba(139,109,255,0.16), transparent 60%),
+    radial-gradient(50rem 50rem at -10% 20%, rgba(90,60,220,0.12), transparent 55%),
+    linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+}
+
+/* Custom scrollbars */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(139,109,255,0.28);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(139,109,255,0.5); background-clip: content-box; }
+
+input:focus, select:focus, textarea:focus { outline: none; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 0.5s cubic-bezier(0.16,1,0.3,1) both; }
