@@ -4,11 +4,10 @@
     "description": "Returns questions with their model answers, rubrics and doc links. mode=meta returns bank statistics instead.",
     "parameters": [
       { "name": "mode", "in": "query", "required": false, "schema": { "type": "string", "enum": ["exam", "drill", "review", "meta"], "default": "exam" } },
-      { "name": "style", "in": "query", "required": false, "schema": { "type": "string", "enum": ["lab", "mixed", "written"], "default": "lab" }, "description": "Exam mode only. lab draws hands-on terminal tasks first, mixed halves them with written tasks, written excludes labs." },
       { "name": "count", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 120 }, "description": "Number of questions (exam default 17, drill default 10)." },
       { "name": "domain", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Drill mode only. Exact CKA domain name." },
       { "name": "topic", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Drill mode only." },
-      { "name": "type", "in": "query", "required": false, "schema": { "type": "string", "enum": ["mcq", "command", "scenario", "lab"] }, "description": "Drill mode only." },
+      { "name": "type", "in": "query", "required": false, "schema": { "type": "string", "enum": ["mcq", "command", "scenario"] }, "description": "Drill mode only." },
       { "name": "ids", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Review mode only. Comma-separated question ids." },
       { "name": "exclude", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Comma-separated question ids to leave out." },
       { "name": "seed", "in": "query", "required": false, "schema": { "type": "integer" }, "description": "Reproducible sampling." }
@@ -25,7 +24,6 @@
                 "mode": { "type": "string" },
                 "count": { "type": "integer" },
                 "total": { "type": "integer", "description": "mode=meta only" },
-                "labs": { "type": "integer", "description": "mode=meta only. Number of hands-on lab tasks." },
                 "domains": {
                   "type": "array",
                   "description": "mode=meta only",
@@ -49,8 +47,7 @@
                       "domain": { "type": "string" },
                       "topic": { "type": "string" },
                       "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
-                      "type": { "type": "string", "enum": ["mcq", "command", "scenario", "lab"] },
-                      "lab": { "type": "object", "description": "Hands-on tasks only: the starting cluster fixture and the state checks used for scoring.", "properties": { "brief": { "type": "string" }, "init": { "type": "object" }, "checks": { "type": "array", "items": { "type": "object" } } } },
+                      "type": { "type": "string", "enum": ["mcq", "command", "scenario"] },
                       "prompt": { "type": "string" },
                       "doc": { "type": "string", "format": "uri" },
                       "explanation": { "type": "string" },

@@ -1,9 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Cluster, type ClusterInit } from "./cluster";
-import { Shell } from "./node";
-import { evaluateLab } from "./checks";
-import { deriveHints } from "./hints";
-import { Terminal } from "./Terminal";
 import {
   api,
   CHEATSHEET,
@@ -55,14 +50,13 @@ function Bar({ value, tone = "signal" }: { value: number; tone?: "signal" | "tea
 
 function TypeTag({ type }: { type: Question["type"] }) {
   const map: Record<Question["type"], string> = {
-    lab: "border-good/60 text-good",
     scenario: "border-signal/50 text-signal",
     command: "border-teal/50 text-teal",
     mcq: "border-dim/40 text-dim",
   };
   return (
     <span className={`border px-1.5 py-0.5 text-[10px] uppercase tracking-widest ${map[type]}`}>
-      {type === "lab" ? "hands-on" : type}
+      {type}
     </span>
   );
 }
@@ -164,202 +158,6 @@ function GradeDetail({ question, grade }: { question: Question; grade: Grade }) 
   );
 }
 
-function AnswerReveal({ question }: { question: Question }) {
-  const correctOption =
-    question.type === "mcq" && typeof question.answerIndex === "number"
-      ? `${String.fromCharCode(65 + question.answerIndex)} — ${question.options?.[question.answerIndex] ?? ""}`
-      : null;
-
-  return (
-    <div className="mt-5 space-y-4 border border-teal/40 bg-teal/5 p-4 text-sm">
-      <div className="flex flex-wrap items-center gap-3">
-        <Label>answer preview</Label>
-        <span className="text-[10px] uppercase tracking-[0.2em] text-dim">
-          revealed before grading
-        </span>
-      </div>
-
-      {correctOption && (
-        <div>
-          <Label>Correct option</Label>
-          <p className="mt-1 text-[13.5px] text-teal">{correctOption}</p>
-        </div>
-      )}
-
-      {question.answer && (
-        <div>
-          <Label>Model answer</Label>
-          <pre className="mt-2 overflow-x-auto border border-edge bg-void/70 p-3 text-[12.5px] leading-relaxed text-teal">
-            {question.answer}
-          </pre>
-        </div>
-      )}
-
-      {question.explanation && (
-        <div>
-          <Label>Why this is correct</Label>
-          <p className="mt-1.5 border-l-2 border-signal/60 pl-3 text-[13px] leading-relaxed text-ink/85">
-            {question.explanation}
-          </p>
-        </div>
-      )}
-
-      {question.rubric && question.rubric.length > 0 && (
-        <div>
-          <Label>What a grader looks for</Label>
-          <ul className="mt-2 space-y-1.5">
-            {question.rubric.map((r, i) => (
-              <li key={i} className="flex gap-2 text-[13px] text-ink/80">
-                <span className="text-teal">·</span>
-                {r}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {question.accepted && question.accepted.length > 0 && (
-        <div>
-          <Label>Also accepted</Label>
-          <ul className="mt-2 space-y-1.5">
-            {question.accepted.map((a, i) => (
-              <li key={i}>
-                <code className="text-[12.5px] text-teal/85">{a}</code>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {question.verify && (
-        <div>
-          <Label>Verify with</Label>
-          <pre className="mt-2 overflow-x-auto border border-edge bg-void/70 p-3 text-[12.5px] text-dim">
-            {question.verify}
-          </pre>
-        </div>
-      )}
-
-      <a
-        href={question.doc}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-block text-[12px] text-teal underline decoration-teal/40 underline-offset-4 hover:decoration-teal"
-      >
-        source: {question.doc.replace(/^https?:\/\//, "")}
-      </a>
-    </div>
-  );
-}
-
-function HintSection({ question }: { question: Question }) {
-  const hints = useMemo(() => deriveHints(question), [question]);
-  const [shown, setShown] = useState(0);
-
-  useEffect(() => {
-    setShown(0);
-  }, [question.id]);
-
-  if (hints.length === 0) return null;
-
-  return (
-    <div className="mt-6 border border-signal/30 bg-signal/5 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <Label>hints</Label>
-          <span className="text-[10px] uppercase tracking-[0.2em] text-dim">
-            {shown}/{hints.length} revealed · no effect on your score
-          </span>
-        </div>
-        <div className="flex gap-2">
-          {shown < hints.length && (
-            <button
-              type="button"
-              onClick={() => setShown((n) => n + 1)}
-              className="border border-signal/60 px-4 py-1.5 text-[11px] uppercase tracking-[0.18em] text-signal hover:bg-signal/10"
-            >
-              {shown === 0 ? "reveal a hint" : "another hint"}
-            </button>
-          )}
-          {shown > 0 && (
-            <button
-              type="button"
-              onClick={() => setShown(0)}
-              className="border border-edge px-4 py-1.5 text-[11px] uppercase tracking-[0.18em] text-dim hover:border-dim hover:text-ink"
-            >
-              hide
-            </button>
-          )}
-        </div>
-      </div>
-
-      {shown === 0 ? (
-        <p className="mt-3 text-[12px] leading-relaxed text-dim">
-          Hints escalate: the shape of the command first, then the flags and fields that matter,
-          then where to look it up. The model answer stays behind “preview answer”.
-        </p>
-      ) : (
-        <ol className="mt-4 space-y-4">
-          {hints.slice(0, shown).map((hint, i) => (
-            <li key={hint.label}>
-              <Label>
-                hint {i + 1} — {hint.label}
-              </Label>
-              <pre className="mt-1.5 overflow-x-auto border border-edge bg-void/70 p-3 text-[12.5px] leading-relaxed text-teal">
-                {hint.lines.join("\n")}
-              </pre>
-              {hint.note && <p className="mt-1.5 text-[11.5px] text-dim">{hint.note}</p>}
-            </li>
-          ))}
-        </ol>
-      )}
-    </div>
-  );
-}
-
-function LabPane({
-  question,
-  shell,
-  mode,
-  onRan,
-  onReset,
-}: {
-  question: Question;
-  shell: Shell;
-  mode: Mode;
-  onRan: () => void;
-  onReset: () => void;
-}) {
-  const lab = question.lab!;
-  return (
-    <div className="space-y-4">
-      <div className="border border-edge bg-void/50 p-3">
-        <Label>environment given to you</Label>
-        <p className="mt-1 text-[12.5px] leading-relaxed text-dim">{lab.brief}</p>
-      </div>
-
-      <Terminal shell={shell} contextName={lab.init.context ?? "kubernetes-admin@kubernetes"} onRan={onRan} onReset={onReset} />
-
-      <div className="border border-edge p-3">
-        <Label>graded on the resulting state</Label>
-        <ul className="mt-2 space-y-1.5">
-          {lab.checks.map((c, i) => (
-            <li key={i} className="flex gap-2 text-[12.5px] text-ink/75">
-              <span className="text-dim">□</span>
-              {c.description}
-            </li>
-          ))}
-        </ul>
-        <p className="mt-3 text-[11px] leading-relaxed text-dim">
-          {mode === "exam"
-            ? "Nothing is verified until you submit — exactly like the real exam. Each check is worth an equal share of the task."
-            : "Press “verify cluster” to run these checks against the cluster and nodes as they stand."}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function QuestionView({
   question,
   index,
@@ -371,10 +169,6 @@ function QuestionView({
   grading,
   onCheck,
   showActions,
-  shell,
-  mode,
-  onRan,
-  onResetLab,
 }: {
   question: Question;
   index: number;
@@ -386,17 +180,7 @@ function QuestionView({
   grading?: boolean;
   onCheck?: () => void;
   showActions: boolean;
-  shell?: Shell;
-  mode: Mode;
-  onRan?: () => void;
-  onResetLab?: () => void;
 }) {
-  const [revealed, setRevealed] = useState(false);
-
-  useEffect(() => {
-    setRevealed(false);
-  }, [question.id]);
-
   return (
     <Panel className="p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -438,9 +222,7 @@ function QuestionView({
       </a>
 
       <div className="mt-6">
-        {question.type === "lab" && shell ? (
-          <LabPane question={question} shell={shell} mode={mode} onRan={() => onRan?.()} onReset={() => onResetLab?.()} />
-        ) : question.type === "mcq" ? (
+        {question.type === "mcq" ? (
           <div className="space-y-2">
             {(question.options ?? []).map((opt, i) => {
               const selected = answer.selectedIndex === i;
@@ -485,41 +267,15 @@ function QuestionView({
         )}
       </div>
 
-      {showActions && (!grade || question.type === "lab") && (
+      {showActions && !grade && (
         <button
           type="button"
           onClick={onCheck}
-          disabled={
-            grading ||
-            (question.type === "lab"
-              ? false
-              : question.type === "mcq"
-                ? answer.selectedIndex === undefined
-                : !answer.text.trim())
-          }
+          disabled={grading || (question.type === "mcq" ? answer.selectedIndex === undefined : !answer.text.trim())}
           className="mt-4 border border-signal bg-signal/10 px-5 py-2 text-[12px] uppercase tracking-[0.2em] text-signal transition-colors hover:bg-signal/20 disabled:border-edge disabled:bg-transparent disabled:text-dim"
         >
-          {grading ? "grading…" : question.type === "lab" ? "verify cluster" : "check answer"}
+          {grading ? "grading…" : "check answer"}
         </button>
-      )}
-
-      {!grade && question.type !== "mcq" && <HintSection question={question} />}
-
-      {!grade && (
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setRevealed((r) => !r)}
-            className={`border px-5 py-2 text-[12px] uppercase tracking-[0.2em] transition-colors ${
-              revealed
-                ? "border-teal bg-teal/10 text-teal"
-                : "border-edge text-dim hover:border-teal hover:text-teal"
-            }`}
-          >
-            {revealed ? "hide answer" : "preview answer"}
-          </button>
-          {revealed && <AnswerReveal question={question} />}
-        </div>
       )}
 
       {grade && <div className="mt-6"><GradeDetail question={question} grade={grade} /></div>}
@@ -531,14 +287,12 @@ function Navigator({
   questions,
   answers,
   grades,
-  touched,
   current,
   onPick,
 }: {
   questions: Question[];
   answers: Record<string, Answer>;
   grades: Record<string, Grade>;
-  touched: Record<string, boolean>;
   current: number;
   onPick: (i: number) => void;
 }) {
@@ -547,10 +301,7 @@ function Navigator({
       {questions.map((q, i) => {
         const a = answers[q.id];
         const g = grades[q.id];
-        const answered =
-          q.type === "lab"
-            ? !!touched[q.id]
-            : a && (q.type === "mcq" ? a.selectedIndex !== undefined : a.text.trim());
+        const answered = a && (q.type === "mcq" ? a.selectedIndex !== undefined : a.text.trim());
         const tone = g
           ? g.score >= 0.9
             ? "border-good/70 text-good"
@@ -711,43 +462,11 @@ function Session({
   const startedAt = useRef(Date.now());
   const [remaining, setRemaining] = useState(EXAM_SECONDS);
   const finished = useRef(false);
-  const shells = useRef(new Map<string, Shell>());
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-  const shellFor = useCallback((q: Question) => {
-    if (!q.lab) return undefined;
-    const existing = shells.current.get(q.id);
-    if (existing) return existing;
-    const made = new Shell(new Cluster(q.lab.init as ClusterInit));
-    shells.current.set(q.id, made);
-    return made;
-  }, []);
-
-  const gradeLab = useCallback(
-    (q: Question): Grade => {
-      const shell = shellFor(q)!;
-      const { results, score, verdict, met, total } = evaluateLab(shell.cluster, q.lab!.checks);
-      return {
-        graded: "deterministic",
-        score,
-        verdict,
-        feedback: `${met}/${total} checks passed. Scoring reads the live state of your lab cluster and its nodes, not the commands you typed.`,
-        rubricResults: results,
-        modelAnswer: q.answer,
-      };
-    },
-    [shellFor],
-  );
 
   const elapsed = () => Math.round((Date.now() - startedAt.current) / 1000);
 
   const gradeOne = useCallback(
     async (q: Question) => {
-      if (q.type === "lab") {
-        const grade = gradeLab(q);
-        setGrades((g) => ({ ...g, [q.id]: grade }));
-        return grade;
-      }
       const a = answers[q.id];
       setGrading((g) => ({ ...g, [q.id]: true }));
       try {
@@ -758,7 +477,7 @@ function Session({
         setGrading((g) => ({ ...g, [q.id]: false }));
       }
     },
-    [answers, gradeLab],
+    [answers],
   );
 
   const submitAll = useCallback(async () => {
@@ -773,10 +492,6 @@ function Session({
       while (queue.length) {
         const q = queue.shift();
         if (!q) return;
-        if (q.type === "lab") {
-          collected[q.id] = gradeLab(q);
-          continue;
-        }
         const a = answers[q.id];
         const empty = q.type === "mcq" ? a?.selectedIndex === undefined : !a?.text.trim();
         if (empty) {
@@ -811,7 +526,7 @@ function Session({
     await Promise.all([worker(), worker(), worker()]);
     setSubmitting(false);
     onFinish(collected, spent);
-  }, [answers, questions, onFinish, gradeLab]);
+  }, [answers, questions, onFinish]);
 
   useEffect(() => {
     if (mode !== "exam") return;
@@ -825,7 +540,6 @@ function Session({
 
   const q = questions[current];
   const answered = questions.filter((x) => {
-    if (x.type === "lab") return !!touched[x.id];
     const a = answers[x.id];
     return a && (x.type === "mcq" ? a.selectedIndex !== undefined : a.text.trim());
   }).length;
@@ -876,7 +590,6 @@ function Session({
           questions={questions}
           answers={answers}
           grades={grades}
-          touched={touched}
           current={current}
           onPick={setCurrent}
         />
@@ -901,18 +614,6 @@ function Session({
           grade={grades[q.id]}
           grading={grading[q.id]}
           showActions={mode === "drill"}
-          shell={shellFor(q)}
-          mode={mode}
-          onRan={() => setTouched((t) => (t[q.id] ? t : { ...t, [q.id]: true }))}
-          onResetLab={() => {
-            shells.current.delete(q.id);
-            shellFor(q);
-            setTouched((t) => {
-              const next = { ...t };
-              delete next[q.id];
-              return next;
-            });
-          }}
           onCheck={() => {
             gradeOne(q).catch((e) => setError((e as Error).message));
           }}
@@ -1147,7 +848,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
 
   const [examCount, setExamCount] = useState(17);
-  const [examStyle, setExamStyle] = useState<"lab" | "mixed" | "written">("lab");
   const [drillDomain, setDrillDomain] = useState("");
   const [drillTopic, setDrillTopic] = useState("");
   const [drillType, setDrillType] = useState("");
@@ -1299,14 +999,11 @@ export default function App() {
               {examCount} tasks · 2-hour countdown · weighted like the real curriculum
             </h2>
             <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-dim">
-              The real CKA is entirely performance-based: a terminal, a cluster, and tasks scored on
-              the state you leave behind. In <span className="text-ink">hands-on</span> style every
-              task hands you a simulated cluster and a terminal — run real kubectl, ssh onto a node for
-              systemctl, journalctl, crictl and etcdctl work, apply manifests with heredocs — and the
-              grader inspects the resulting cluster and node state when you submit, not the words you
-              typed. Tasks are drawn by domain weight; flag and skip freely; nothing is verified until
-              submit, exactly like exam day. “Preview answer” still reveals the model solution and the
-              reasoning if you want to study instead of sit the clock.
+              Questions are drawn by domain weight, so a 17-task session mirrors the bundled
+              killer.sh simulator's shape. Type real kubectl commands and manifests; flag anything
+              you want to revisit; everything is graded when you submit or when the clock expires.
+              Answers are graded against a model solution and a rubric — style and flag order do
+              not matter, correctness does.
             </p>
             <div className="mt-6 flex flex-wrap items-end gap-4">
               <label className="block">
@@ -1320,33 +1017,15 @@ export default function App() {
                   className="mt-1 block w-24 border border-edge bg-void/80 px-3 py-2 text-[13px] text-teal outline-none focus:border-signal/70"
                 />
               </label>
-              <label className="block">
-                <Label>style</Label>
-                <select
-                  value={examStyle}
-                  onChange={(e) => setExamStyle(e.target.value as typeof examStyle)}
-                  className="mt-1 block w-64 border border-edge bg-void/80 px-3 py-2 text-[13px] text-ink outline-none focus:border-signal/70"
-                >
-                  <option value="lab">hands-on labs (closest to the exam)</option>
-                  <option value="mixed">mixed — labs plus written tasks</option>
-                  <option value="written">written only — no terminal</option>
-                </select>
-              </label>
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => void start("exam", () => api.exam(examCount, examStyle))}
+                onClick={() => void start("exam", () => api.exam(examCount))}
                 className="border border-signal bg-signal/10 px-6 py-2.5 text-[12px] uppercase tracking-[0.2em] text-signal hover:bg-signal/20 disabled:text-dim"
               >
                 {busy ? "loading…" : "start exam"}
               </button>
             </div>
-            {meta && examStyle === "lab" && examCount > meta.labs && (
-              <p className="mt-4 text-[11.5px] text-dim">
-                {meta.labs} hands-on labs exist right now, so a {examCount}-task session adds{" "}
-                {examCount - meta.labs} written tasks to fill the domain weights.
-              </p>
-            )}
           </Panel>
         ) : tab === "drill" ? (
           <Panel className="p-6">
@@ -1402,7 +1081,6 @@ export default function App() {
                   className="mt-1 w-full border border-edge bg-void/80 px-3 py-2 text-[13px] text-ink outline-none focus:border-signal/70"
                 >
                   <option value="">all types</option>
-                  <option value="lab">hands-on labs (terminal)</option>
                   <option value="scenario">scenario tasks</option>
                   <option value="command">command recall</option>
                   <option value="mcq">concept checks</option>
@@ -1445,9 +1123,8 @@ export default function App() {
 
       <footer className="mx-auto max-w-6xl px-5 pb-10 text-[11px] leading-relaxed text-dim">
         Domain weights and exam format verified against training.linuxfoundation.org and cncf.io.
-        Hands-on tasks run against a simulated in-browser cluster: a faithful subset of kubectl plus
-        a node shell (systemctl, journalctl, crictl, etcdctl, file editing) reached with ssh. It is a
-        simulation, not a real API server or Linux box. Pair this with a real kubeadm or kind cluster for muscle memory.
+        Answers are written and graded here, not executed against a live cluster — pair this with a
+        real kubeadm or kind cluster for muscle memory.
       </footer>
     </div>
   );

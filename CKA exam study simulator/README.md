@@ -1,10 +1,10 @@
-A practice environment for the Certified Kubernetes Administrator exam: a hands-on kubectl lab against a simulated cluster, a 139-item bank weighted to the published curriculum, timed mock exams, topic drills, AI-graded free-form answers, and per-user progress tracking.
+A practice environment for the Certified Kubernetes Administrator exam: a 120-question bank weighted to the published curriculum, timed mock exams, topic drills, AI-graded free-form answers, and per-user progress tracking.
 
 Open **[/cka](/cka)** in a browser. Everything else is an API the page calls; all routes are space-authenticated, so only members of Shaun-Space can reach them.
 
 ### Verified against the source
 
-Facts baked into the UI and the sampler come from [training.linuxfoundation.org](https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/) and [cncf.io](https://www.cncf.io/training/certification/cka/): performance-based, 2 hours, 15–20 tasks, Kubernetes v1.35, and the domain weights Troubleshooting 30% · Cluster Architecture, Installation & Configuration 25% · Services & Networking 20% · Workloads & Scheduling 15% · Storage 10%. The exam is entirely performance-based, which is why a mock exam defaults to hands-on lab tasks driven from a terminal and scored on cluster state; a 14-task session covers the current lab set. Each question links the kubernetes.io page its answer was written from, so anything can be checked at the source.
+Facts baked into the UI and the sampler come from [training.linuxfoundation.org](https://training.linuxfoundation.org/certification/certified-kubernetes-administrator-cka/) and [cncf.io](https://www.cncf.io/training/certification/cka/): performance-based, 2 hours, 15–20 tasks, Kubernetes v1.35, and the domain weights Troubleshooting 30% · Cluster Architecture, Installation & Configuration 25% · Services & Networking 20% · Workloads & Scheduling 15% · Storage 10%. The bundled Killer.sh simulator runs 17 questions per session, which is why a mock exam defaults to 17 tasks. Each question links the kubernetes.io page its answer was written from, so anything can be checked at the source.
 
 ### The flow
 
@@ -27,11 +27,6 @@ Writes only its own study history to the `cka_progress` volume, keyed by the aut
 
 - **Add or edit questions** — the per-domain files under [Questions API/bank/](<Questions API/bank>); nothing else needs updating.
 - **Change exam length or the pass heuristic** — `EXAM_SECONDS` and `PASS_ESTIMATE` at the top of [Simulator/App.tsx](<Simulator/App.tsx>).
-- **Change how hints work** — [Simulator/hints.ts](<Simulator/hints.ts>). Every command-typing task (labs, scenarios, command recall) shows a progressive hint section in exams and drills, derived from the model answer rather than authored per question.
 - **Change domain weighting** — `WEIGHTS` in [Questions API/script.ts](<Questions API/script.ts>); update it if the CNCF curriculum changes.
 - **Tune grading strictness** — `GRADER_SYSTEM` in [Grade answer/script.ts](<Grade answer/script.ts>).
 - **Reset progress** — delete rows from the `attempts`/`sessions` tables via [Progress API](<Progress API/script.ts>); the volume is per-space and drafts are isolated.
-
-### The kubectl lab
-
-Hands-on tasks are graded on the state of a simulated Kubernetes cluster that runs entirely in the browser — [Simulator/cluster.ts](<Simulator/cluster.ts>) is the cluster engine and kubectl implementation, [Simulator/node.ts](<Simulator/node.ts>) the node shell, [Simulator/Terminal.tsx](<Simulator/Terminal.tsx>) the prompt, [Simulator/checks.ts](<Simulator/checks.ts>) the scorer, and the fixtures and checks live with the questions in [Questions API/bank/labs.ts](<Questions API/bank/labs.ts>) and [bank/nodelabs.ts](<Questions API/bank/nodelabs.ts>). No real cluster or API server is contacted, and labs never call the grader step. Node-level tasks are simulated too: `ssh <node>` gives a shell with systemd units, the kubelet journal, `crictl`, `etcdctl` and editable files under `/etc/kubernetes`, and those labs are graded on unit state and file contents.

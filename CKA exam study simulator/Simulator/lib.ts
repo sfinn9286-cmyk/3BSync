@@ -1,55 +1,10 @@
-export type LabCheck = {
-  description: string;
-  kind: string;
-  name?: string;
-  namespace?: string;
-  selector?: string;
-  host?: string;
-  absent?: boolean;
-  count?: number;
-  minCount?: number;
-  path?: string;
-  equals?: string | number | boolean;
-  contains?: string;
-  gte?: number;
-};
-
-export type Lab = {
-  brief: string;
-  init: {
-    context?: string;
-    nodes?: {
-      name: string;
-      roles?: string;
-      version?: string;
-      ready?: boolean;
-      schedulable?: boolean;
-      labels?: Record<string, string>;
-      taints?: { key: string; value?: string; effect: string }[];
-      cpu?: string;
-      memory?: string;
-    }[];
-    namespaces?: string[];
-    hosts?: Record<string, {
-      files?: Record<string, string>;
-      services?: Record<string, { active?: boolean; enabled?: boolean; log?: string }>;
-      containers?: { id?: string; name: string; pod?: string; state?: string; log?: string }[];
-      swap?: boolean;
-    }>;
-    resources?: Record<string, unknown>[];
-    logs?: Record<string, string>;
-    exec?: Record<string, string>;
-  };
-  checks: LabCheck[];
-};
-
 export type Question = {
   id: string;
   domain: string;
   topic: string;
   difficulty: "easy" | "medium" | "hard";
   doc: string;
-  type: "mcq" | "command" | "scenario" | "lab";
+  type: "mcq" | "command" | "scenario";
   prompt: string;
   explanation: string;
   options?: string[];
@@ -58,7 +13,6 @@ export type Question = {
   accepted?: string[];
   rubric?: string[];
   verify?: string;
-  lab?: Lab;
 };
 
 export type Grade = {
@@ -75,8 +29,7 @@ export type Grade = {
 
 export type Meta = {
   total: number;
-  labs: number;
-  domains: { domain: string; weight: number; count: number; labs: number; topics: string[] }[];
+  domains: { domain: string; weight: number; count: number; topics: string[] }[];
 };
 
 export type Progress = {
@@ -121,10 +74,8 @@ async function json<T>(input: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   meta: () => json<Meta>(url("/cka/questions", { mode: "meta" })),
-  exam: (count: number, style: "lab" | "mixed" | "written" = "lab") =>
-    json<{ seed: number; questions: Question[] }>(
-      url("/cka/questions", { mode: "exam", count, style }),
-    ),
+  exam: (count: number) =>
+    json<{ seed: number; questions: Question[] }>(url("/cka/questions", { mode: "exam", count })),
   drill: (params: { domain?: string; topic?: string; type?: string; count: number }) =>
     json<{ seed: number; questions: Question[] }>(url("/cka/questions", { mode: "drill", ...params })),
   review: (ids: string[]) =>
