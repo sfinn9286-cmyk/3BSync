@@ -1,0 +1,4 @@
+color = "purple"
+output = true
+route = "/patch-dashboard"
+route_type = "webpage"

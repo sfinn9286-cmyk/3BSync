@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@source "./*.tsx";
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Chakra Petch", "IBM Plex Sans", sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #020617;
+}
