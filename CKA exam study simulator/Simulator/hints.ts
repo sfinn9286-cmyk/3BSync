@@ -1,6 +1,7 @@
 import type { Question } from "./lib";
+import { studyResources, type Resource } from "./study";
 
-export type Hint = { label: string; lines: string[]; note?: string };
+export type Hint = { label: string; lines: string[]; note?: string; resources?: Resource[] };
 
 const REDACT = "▁▁▁";
 
@@ -194,7 +195,14 @@ export function deriveHints(question: Question): Hint[] {
   hints.push({
     label: "where to look it up",
     lines: lookupLines.length > 0 ? lookupLines : ["kubectl --help"],
-    note: `On the real exam you may open kubernetes.io — this task was written from ${question.doc.replace(/^https?:\/\//, "")}.`,
+    note: "On the real exam you may open kubernetes.io — these are the commands that get you there fastest.",
+  });
+
+  hints.push({
+    label: "study material for this topic",
+    lines: [`${question.domain} · ${question.topic}`],
+    note: "Docs, walkthroughs and course chapters covering exactly this task. Opens in a new tab.",
+    resources: studyResources(question),
   });
 
   return hints;

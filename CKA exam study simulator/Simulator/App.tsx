@@ -3,6 +3,7 @@ import { Cluster, type ClusterInit } from "./cluster";
 import { Shell } from "./node";
 import { evaluateLab } from "./checks";
 import { deriveHints } from "./hints";
+import { studyResources, type Resource } from "./study";
 import { Terminal } from "./Terminal";
 import {
   api,
@@ -78,6 +79,50 @@ function VerdictTag({ grade }: { grade: Grade }) {
     <span className={`border px-2 py-0.5 text-[11px] uppercase tracking-widest ${tone}`}>
       {grade.verdict} · {fmtPct(grade.score)}
     </span>
+  );
+}
+
+function ResourceList({ resources }: { resources: Resource[] }) {
+  if (resources.length === 0) return null;
+  const tone: Record<Resource["kind"], string> = {
+    doc: "border-teal/50 text-teal",
+    video: "border-signal/50 text-signal",
+    course: "border-good/50 text-good",
+  };
+  const word: Record<Resource["kind"], string> = { doc: "docs", video: "video", course: "course" };
+  return (
+    <ul className="mt-2 space-y-1.5">
+      {resources.map((r) => (
+        <li key={r.url} className="flex flex-wrap items-baseline gap-2">
+          <span
+            className={`border px-1.5 py-0.5 text-[9.5px] uppercase tracking-widest ${tone[r.kind]}`}
+          >
+            {word[r.kind]}
+          </span>
+          <a
+            href={r.url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[12.5px] text-ink/85 underline decoration-dim/50 underline-offset-4 hover:text-signal hover:decoration-signal"
+          >
+            {r.label}
+          </a>
+          <span className="text-[11px] text-dim">
+            {r.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function StudyBlock({ question }: { question: Question }) {
+  const resources = useMemo(() => studyResources(question), [question]);
+  return (
+    <div>
+      <Label>supporting material</Label>
+      <ResourceList resources={resources} />
+    </div>
   );
 }
 
@@ -160,6 +205,8 @@ function GradeDetail({ question, grade }: { question: Question; grade: Grade }) 
           {question.explanation}
         </p>
       )}
+
+      <StudyBlock question={question} />
     </div>
   );
 }
@@ -240,14 +287,7 @@ function AnswerReveal({ question }: { question: Question }) {
         </div>
       )}
 
-      <a
-        href={question.doc}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-block text-[12px] text-teal underline decoration-teal/40 underline-offset-4 hover:decoration-teal"
-      >
-        source: {question.doc.replace(/^https?:\/\//, "")}
-      </a>
+      <StudyBlock question={question} />
     </div>
   );
 }
@@ -296,7 +336,8 @@ function HintSection({ question }: { question: Question }) {
       {shown === 0 ? (
         <p className="mt-3 text-[12px] leading-relaxed text-dim">
           Hints escalate: the shape of the command first, then the flags and fields that matter,
-          then where to look it up. The model answer stays behind “preview answer”.
+          then where to look it up, and finally links to the docs, walkthroughs and course chapters
+          covering this topic. The model answer stays behind “preview answer”.
         </p>
       ) : (
         <ol className="mt-4 space-y-4">
@@ -308,6 +349,7 @@ function HintSection({ question }: { question: Question }) {
               <pre className="mt-1.5 overflow-x-auto border border-edge bg-void/70 p-3 text-[12.5px] leading-relaxed text-teal">
                 {hint.lines.join("\n")}
               </pre>
+              {hint.resources && <ResourceList resources={hint.resources} />}
               {hint.note && <p className="mt-1.5 text-[11.5px] text-dim">{hint.note}</p>}
             </li>
           ))}
